@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "users") // 'user'는 여러 DB에서 예약어일 수 있으므로 'users'를 권장합니다.
+@Table(name = "users")
 public class UserDomain {
 
     @Id
@@ -22,9 +22,14 @@ public class UserDomain {
     @Column(nullable = false)
     private String password;
 
+    @Column(nullable = false)
+    @Enumerated(value = EnumType.STRING)
+    private UserRoleEnum role; // 역할 필드 추가
+
     @Builder
-    public UserDomain(String email, String password) {
+    public UserDomain(String email, String password, UserRoleEnum role) {
         this.email = email;
         this.password = password;
+        this.role = role;
     }
 }

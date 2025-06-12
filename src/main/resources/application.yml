@@ -1,0 +1,11 @@
+spring:
+# ... ?? ?? ...
+
+# JWT ?? ??
+jwt:
+  secret:
+    key: 7ZWt7ZW0Ode+7WB47J207Iuc7KCE7ZiV7JuQ67O47KCV7J207YSw7YWU6rCA7J6I64uI64ukLiA= # Base64 Encoded Secret Key
+
+# ?? ??? ?? ??
+admin:
+  token: AAminskdAM_10291_!@#DS1_admin # ADMIN ?? ??? ?? ??

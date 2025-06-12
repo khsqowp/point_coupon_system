@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,12 +16,13 @@ public class CouponController {
 
     private final CouponService couponService;
 
-    // 관리자: 쿠폰 정책 등록
+    @Secured("ROLE_ADMIN") // ADMIN 권한이 있는 사용자만 접근 가능
     @PostMapping
     public ResponseEntity<String> createCoupon(@Valid @RequestBody CouponCreateRequestDTO requestDTO) {
         couponService.createCoupon(requestDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body("쿠폰 정책이 성공적으로 등록되었습니다.");
     }
+
 
     // 사용자: 쿠폰 발급 요청 (대기열 추가)
     @PostMapping("/{couponId}/apply")

@@ -25,3 +25,12 @@ logging:
   level:
     # SQL 파라미터 로그 출력
     org.hibernate.orm.jdbc.bind: trace
+
+# JWT 및 관리자 토큰 설정 (테스트용)
+jwt:
+  secret:
+    key: N2Y0YTFiZDYtY2U5My00M2Q3LTk5MjctNzM3ODg5Y2E3YjM2Cg== # 아무 값이나 상관없음
+
+admin:
+  token: AAminskdAM_10291_!@#DS1_admin_test
+

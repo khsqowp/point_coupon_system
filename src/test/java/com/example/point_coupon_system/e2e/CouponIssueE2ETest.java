@@ -5,6 +5,7 @@ import com.example.point_coupon_system.domain.UserDomain;
 import com.example.point_coupon_system.repository.CouponRepository;
 import com.example.point_coupon_system.repository.IssuedCouponRepository;
 import com.example.point_coupon_system.repository.UserRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional // DB 상태 롤백
+//@Transactional // DB 상태 롤백
 @EmbeddedKafka(partitions = 1, brokerProperties = { "listeners=PLAINTEXT://localhost:9092", "port=9092" })
 class CouponIssueE2ETest {
 
@@ -47,7 +48,6 @@ class CouponIssueE2ETest {
 
     private UserDomain testUser;
     private CouponDomain testCoupon;
-    private final String queueKey = "coupon:queue:1";
 
     @BeforeEach
     void setUp() {
@@ -56,7 +56,8 @@ class CouponIssueE2ETest {
 
         // 테스트에 사용할 사용자, 쿠폰 정책 생성
         testUser = userRepository.save(UserDomain.builder().email("e2e@example.com").password("password").build());
-        testCoupon = couponRepository.save(CouponDomain.builder().id(1L).couponName("E2E 테스트 쿠폰").totalQuantity(100L).validityPeriod(7).build());
+        // id는 DB에서 자동 생성되므로 빌더에서 제거
+        testCoupon = couponRepository.save(CouponDomain.builder().couponName("E2E 테스트 쿠폰").totalQuantity(100L).validityPeriod(7).build());
     }
 
     @Test
@@ -65,6 +66,8 @@ class CouponIssueE2ETest {
         // given
         Long userId = testUser.getId();
         Long couponId = testCoupon.getId();
+        // 실제 생성된 쿠폰 ID를 기반으로 동적으로 큐 키 생성
+        String queueKey = "coupon:queue:" + couponId;
 
         // when
         // 1. 사용자가 쿠폰 발급 API를 호출하여 Redis 대기열에 추가
@@ -87,6 +90,6 @@ class CouponIssueE2ETest {
         assertEquals(1, updatedCoupon.getIssuedQuantity());
 
         // 5. Redis 대기열에서 처리된 요청이 제거되었는지 확인
-        assertEquals(0, (long) redisTemplate.opsForZSet().size(queueKey));
+        assertEquals(0, (long) Objects.requireNonNull(redisTemplate.opsForZSet().size(queueKey)));
     }
 }

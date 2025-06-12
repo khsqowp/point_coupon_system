@@ -1,0 +1,27 @@
+spring:
+  # 테스트 환경에서는 H2 인메모리 DB 사용
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  # JPA 설정을 테스트 환경에 맞게 조정
+  jpa:
+    hibernate:
+      ddl-auto: create-drop # 테스트 실행 시 스키마를 생성하고, 끝나면 삭제
+    show-sql: true # SQL 쿼리 로그 출력
+    properties:
+      hibernate:
+        format_sql: true
+
+  # Redisson 설정에 필요한 Redis 정보 제공
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+logging:
+  level:
+    # SQL 파라미터 로그 출력
+    org.hibernate.orm.jdbc.bind: trace

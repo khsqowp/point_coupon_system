@@ -42,6 +42,13 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
 
+    testImplementation 'org.awaitility:awaitility' // E2E 테스트에서 사용했으므로 추가
+    testImplementation 'org.awaitility:awaitility'
+
+    // Spring Retry 기능을 사용하기 위해 AOP 스타터가 필요합니다.
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
+    testImplementation 'org.awaitility:awaitility'
+
 
 }
 

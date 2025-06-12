@@ -2,9 +2,11 @@ package com.example.point_coupon_system;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-@EnableScheduling // 스케줄링 기능 활성화
+@EnableRetry // 재시도 기능 활성화
+@EnableScheduling
 @SpringBootApplication
 public class PointCouponSystemApplication {
 

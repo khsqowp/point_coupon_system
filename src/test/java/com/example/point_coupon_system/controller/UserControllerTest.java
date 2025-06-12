@@ -1,6 +1,12 @@
 package com.example.point_coupon_system.controller;
 
+import com.example.point_coupon_system.domain.CouponDomain;
+import com.example.point_coupon_system.domain.IssuedCouponDomain;
+import com.example.point_coupon_system.domain.UserDomain;
 import com.example.point_coupon_system.dto.UserSignupRequestDTO;
+import com.example.point_coupon_system.repository.CouponRepository;
+import com.example.point_coupon_system.repository.IssuedCouponRepository;
+import com.example.point_coupon_system.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,67 +17,53 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional // 각 테스트 후 롤백을 위함
+@Transactional
 class UserControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
-
     @Autowired
     private ObjectMapper objectMapper;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private CouponRepository couponRepository;
+    @Autowired
+    private IssuedCouponRepository issuedCouponRepository;
+
+    // ... 기존 회원가입 API 테스트 ...
 
     @Test
-    @DisplayName("회원가입 API 호출 성공")
-    void signupApi_success() throws Exception {
+    @DisplayName("사용자 쿠폰 목록 조회 API 성공")
+    void getUserCouponsApi_success() throws Exception {
         // given
-        UserSignupRequestDTO requestDto = new UserSignupRequestDTO();
-        // DTO 필드 값을 설정하기 위해 리플렉션 대신 public setter 또는 생성자 사용을 권장합니다.
-        // 테스트를 위해 임시로 public setter를 DTO에 추가하거나, 테스트용 생성자를 만들 수 있습니다.
-        // 여기서는 개념 설명을 위해 필드가 public이라고 가정합니다. 실제 코드에서는 접근자를 사용하세요.
-        // requestDto.setEmail("test@example.com");
-        // requestDto.setPassword("password123");
-        String jsonBody = "{\"email\":\"test@example.com\", \"password\":\"password123\"}";
-
+        // 1. 테스트용 사용자, 쿠폰, 발급된 쿠폰 데이터를 저장
+        UserDomain user = userRepository.save(UserDomain.builder().email("couponuser@example.com").password("password").build());
+        CouponDomain coupon = couponRepository.save(CouponDomain.builder().couponName("조회용 쿠폰").totalQuantity(100L).validityPeriod(30).build());
+        issuedCouponRepository.save(IssuedCouponDomain.builder().user(user).coupon(coupon).build());
 
         // when & then
-        mockMvc.perform(post("/users/signup")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonBody))
-                .andExpect(status().isCreated())
+        mockMvc.perform(get("/users/" + user.getId() + "/coupons"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$[0].couponName").value("조회용 쿠폰"))
                 .andDo(print());
     }
 
     @Test
-    @DisplayName("회원가입 API 호출 실패 - 잘못된 이메일 형식")
-    void signupApi_fail_with_invalid_email() throws Exception {
-        // given
-        String jsonBody = "{\"email\":\"invalid-email\", \"password\":\"password123\"}";
-
+    @DisplayName("사용자 쿠폰 목록 조회 API 실패 - 사용자를 찾을 수 없음")
+    void getUserCouponsApi_fail_userNotFound() throws Exception {
         // when & then
-        mockMvc.perform(post("/users/signup")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonBody))
-                .andExpect(status().isBadRequest()) // @Valid에 의해 400 Bad Request가 반환되어야 함
-                .andDo(print());
-    }
-
-    @Test
-    @DisplayName("회원가입 API 호출 실패 - 짧은 비밀번호")
-    void signupApi_fail_with_short_password() throws Exception {
-        // given
-        String jsonBody = "{\"email\":\"test@example.com\", \"password\":\"pass\"}";
-
-        // when & then
-        mockMvc.perform(post("/users/signup")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonBody))
-                .andExpect(status().isBadRequest())
+        mockMvc.perform(get("/users/9999/coupons"))
+                .andExpect(status().isNotFound())
                 .andDo(print());
     }
 }

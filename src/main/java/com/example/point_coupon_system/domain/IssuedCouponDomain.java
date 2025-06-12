@@ -27,13 +27,14 @@ public class IssuedCouponDomain {
     private CouponDomain coupon;
 
     @Column(nullable = false)
-    private LocalDateTime issuedAt; // 발급 일시
+    private LocalDateTime issuedAt;
 
     @Column(nullable = false)
-    private LocalDateTime expiresAt; // 만료 일시
+    private LocalDateTime expiresAt;
 
+    @Enumerated(EnumType.STRING) // Enum 타입을 문자열로 저장
     @Column(nullable = false)
-    private boolean isUsed; // 사용 여부
+    private CouponStatus status; // isUsed 필드를 status로 변경
 
     @Builder
     public IssuedCouponDomain(UserDomain user, CouponDomain coupon) {
@@ -41,6 +42,11 @@ public class IssuedCouponDomain {
         this.coupon = coupon;
         this.issuedAt = LocalDateTime.now();
         this.expiresAt = this.issuedAt.plusDays(coupon.getValidityPeriod());
-        this.isUsed = false;
+        this.status = CouponStatus.ACTIVE; // 초기 상태는 ACTIVE
+    }
+
+    // 쿠폰 상태를 만료로 변경하는 메소드
+    public void expire() {
+        this.status = CouponStatus.EXPIRED;
     }
 }

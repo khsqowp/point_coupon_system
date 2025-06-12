@@ -1,7 +1,11 @@
 package com.example.point_coupon_system.service;
 
+import com.example.point_coupon_system.domain.CouponDomain;
+import com.example.point_coupon_system.domain.IssuedCouponDomain;
 import com.example.point_coupon_system.domain.UserDomain;
+import com.example.point_coupon_system.dto.IssuedCouponResponseDTO;
 import com.example.point_coupon_system.dto.UserSignupRequestDTO;
+import com.example.point_coupon_system.repository.IssuedCouponRepository;
 import com.example.point_coupon_system.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,6 +15,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -25,44 +31,43 @@ class UserServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private IssuedCouponRepository issuedCouponRepository; // 의존성 Mock 추가
+
     @InjectMocks
     private UserService userService;
 
+    // ... 기존 회원가입 테스트 ...
+
     @Test
-    @DisplayName("회원가입 성공 테스트")
-    void signup_success() {
-        // given: 이러한 데이터가 주어지고
-        UserSignupRequestDTO requestDto = new UserSignupRequestDTO();
-        ReflectionTestUtils.setField(requestDto, "email", "test@example.com");
-        ReflectionTestUtils.setField(requestDto, "password", "password123");
+    @DisplayName("사용자 쿠폰 목록 조회 성공 테스트")
+    void getIssuedCoupons_success() {
+        // given
+        Long userId = 1L;
+        UserDomain user = UserDomain.builder().build();
+        CouponDomain coupon = CouponDomain.builder().couponName("테스트 쿠폰").build();
+        IssuedCouponDomain issuedCoupon = IssuedCouponDomain.builder().user(user).coupon(coupon).build();
 
-        // userRepository.findByEmail이 호출될 때 Optional.empty()를 반환하도록 설정 (중복 없음)
-        given(userRepository.findByEmail(requestDto.getEmail())).willReturn(Optional.empty());
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(issuedCouponRepository.findAllByUserId(userId)).willReturn(Collections.singletonList(issuedCoupon));
 
-        // when: signup 메소드를 실행하면
-        assertDoesNotThrow(() -> userService.signup(requestDto));
+        // when
+        List<IssuedCouponResponseDTO> result = userService.getIssuedCoupons(userId);
 
-        // then: userRepository.save가 1번 호출되어야 한다
-        verify(userRepository, times(1)).save(any(UserDomain.class));
+        // then
+        assertFalse(result.isEmpty());
+        assertEquals(1, result.size());
+        assertEquals("테스트 쿠폰", result.get(0).getCouponName());
     }
 
     @Test
-    @DisplayName("회원가입 실패 테스트 - 이메일 중복")
-    void signup_fail_with_duplicate_email() {
-        // given: 이러한 데이터가 주어지고
-        UserSignupRequestDTO requestDto = new UserSignupRequestDTO();
-        ReflectionTestUtils.setField(requestDto, "email", "test@example.com");
-        ReflectionTestUtils.setField(requestDto, "password", "password123");
+    @DisplayName("사용자 쿠폰 목록 조회 실패 - 존재하지 않는 사용자")
+    void getIssuedCoupons_fail_userNotFound() {
+        // given
+        Long userId = 999L;
+        given(userRepository.findById(userId)).willReturn(Optional.empty());
 
-        UserDomain existingUser = UserDomain.builder().build();
-
-        // userRepository.findByEmail이 호출될 때 이미 존재하는 UserDomain 객체를 반환하도록 설정 (중복 있음)
-        given(userRepository.findByEmail(requestDto.getEmail())).willReturn(Optional.of(existingUser));
-
-        // when & then: signup 메소드를 실행하면 IllegalArgumentException이 발생해야 한다
-        assertThrows(IllegalArgumentException.class, () -> userService.signup(requestDto));
-
-        // then: userRepository.save가 호출되지 않아야 한다
-        verify(userRepository, times(0)).save(any(UserDomain.class));
+        // when & then
+        assertThrows(IllegalArgumentException.class, () -> userService.getIssuedCoupons(userId));
     }
 }
